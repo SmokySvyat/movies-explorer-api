@@ -1,7 +1,7 @@
-import { Schema, model } from 'mongoose';
-import { isURL } from 'validator';
+const mongoose = require('mongoose');
+const validator = require('validator');
 
-const movieSchema = new Schema({
+const movieSchema = new mongoose.Schema({
   country: {
     type: String,
     required: true,
@@ -26,7 +26,7 @@ const movieSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
+      validator: (v) => validator.isURL(v),
       message: 'Некорректный URL',
     },
   },
@@ -34,7 +34,7 @@ const movieSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
+      validator: (v) => validator.isURL(v),
       message: 'Некорректный URL',
     },
   },
@@ -42,7 +42,7 @@ const movieSchema = new Schema({
     type: String,
     required: true,
     validate: {
-      validator: (v) => isURL(v),
+      validator: (v) => validator.isURL(v),
       message: 'Некорректный URL',
     },
   },
@@ -65,6 +65,6 @@ const movieSchema = new Schema({
   },
 }, { versionKey: false });
 
-const Movie = model('movie', movieSchema);
+const Movie = mongoose.model('movie', movieSchema);
 
 module.exports = Movie;

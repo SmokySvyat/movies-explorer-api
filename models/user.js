@@ -1,13 +1,13 @@
-import { Schema, model } from 'mongoose';
-import { isEmail } from 'validator';
+const mongoose = require('mongoose');
+const validator = require('validator');
 
-const userSchema = new Schema({
+const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: true,
     unique: true,
     validate: {
-      validator: (v) => isEmail(v),
+      validator: (v) => validator.isEmail(v),
       message: 'Некорректный email',
     },
   },
@@ -33,6 +33,6 @@ userSchema.methods.toJSON = function toJson() {
   return user;
 };
 
-const User = model('user', userSchema);
+const User = mongoose.model('user', userSchema);
 
-export default User;
+module.exports = User;
