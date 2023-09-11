@@ -9,6 +9,7 @@ const helmet = require('helmet');
 
 const errorHandler = require('./middlewares/error');
 const router = require('./routes');
+const { limiter, PORT, MONGO } = require('./utils/constants');
 const { requestLogger, errorLogger } = require('./middlewares/logger');
 
 const app = express();
@@ -19,7 +20,8 @@ app.use(bodyParser.json());
 app.use(cookieParser());
 app.use(requestLogger);
 
-mongoose.connect('mongodb://127.0.0.1:27017/bitfilmsdb')
+app.use(limiter);
+mongoose.connect(MONGO)
   .then(() => console.log('Connected to data base'));
 
 app.use(router);
@@ -28,6 +30,6 @@ app.use(errorLogger);
 app.use(errors());
 app.use(errorHandler);
 
-app.listen(3000, () => {
-  console.log('App listening on port 3000');
+app.listen(PORT, () => {
+  console.log(`App listening on port ${PORT}`);
 });

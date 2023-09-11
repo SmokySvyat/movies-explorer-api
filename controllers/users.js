@@ -3,15 +3,13 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const {
-  ERROR_CODE_UNIQUE, STATUS_OK, CREATED, DEV_SECRET,
+  ERROR_CODE_UNIQUE, STATUS_OK, CREATED, JWT_SECRET,
 } = require('../utils/constants');
 const BadRequest = require('../utils/errors/BadRequest');
 const NotFound = require('../utils/errors/NotFound');
 const NotUnique = require('../utils/errors/NotUnique');
 const ErrorAccess = require('../utils/errors/ErrorAccess');
 const User = require('../models/user');
-
-const { NODE_ENV, JWT_SECRET } = process.env;
 
 const login = (req, res, next) => {
   const { email, password } = req.body;
@@ -25,7 +23,7 @@ const login = (req, res, next) => {
       bcrypt.compare(password, user.password)
         .then((isValidUser) => {
           if (isValidUser) {
-            const newToken = jwt.sign({ _id: user._id }, NODE_ENV === 'production' ? JWT_SECRET : DEV_SECRET, { expiresIn: '7d' });
+            const newToken = jwt.sign({ _id: user._id }, JWT_SECRET, { expiresIn: '7d' });
             res.send({
               id: user._id,
               token: newToken,
@@ -41,25 +39,22 @@ const login = (req, res, next) => {
     .catch(next);
 };
 
-const findById = (req, res, next, id) => {
-  User.findById(id)
-    .orFail(new NotFound(`Пользователь по указанному id: ${id} не найден`))
-    .then((user) => res.send(user))
-    .catch(next);
-};
-
-const getCurrentUser = (req, res, next) => {
-  const { _id } = req.user;
-  // console.log(`текущий пользователь: ${_id}`);
-  findById(req, res, next, _id);
-};
+const getUserInfo = (req, res, next) => User.findById(req.user._id)
+  .orFail(new NotFound('Пользователь не найден'))
+  .then((user) => {
+    res.status(200).send(user);
+  })
+  .catch((error) => {
+    next(error);
+  });
 
 const createUser = (req, res, next) => {
   const {
     name, email, password,
   } = req.body;
+  // console.log(req.body);
 
-  return bcrypt.hash(String(password), 10)
+  return bcrypt.hash(password, 10)
     .then((hash) => User.create({
       name, email, password: hash,
     }))
@@ -80,7 +75,7 @@ const createUser = (req, res, next) => {
     });
 };
 
-const updateProfileInfo = (req, res, next) => {
+const updateUserInfo = (req, res, next) => {
   const { name, email } = req.body;
   const { _id } = req.user;
 
@@ -103,6 +98,6 @@ const updateProfileInfo = (req, res, next) => {
 module.exports = {
   login,
   createUser,
-  getCurrentUser,
-  updateProfileInfo,
+  getUserInfo,
+  updateUserInfo,
 };

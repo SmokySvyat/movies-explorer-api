@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema({
     minlength: 2,
     maxlength: 30,
   },
-}, { versionKey: false });
+});
 
 userSchema.methods.toJSON = function toJson() {
   const user = this.toObject();

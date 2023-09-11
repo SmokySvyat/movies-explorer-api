@@ -6,45 +6,19 @@ const Forbidden = require('../utils/errors/Forbiden');
 const Movie = require('../models/movie');
 
 const getMovies = (req, res, next) => {
-  Movie.find({})
-    .then((cards) => {
+  Movie.find({ owner: req.user._id })
+    .then((movies) => {
       res
         .status(STATUS_OK)
-        .send(cards);
+        .send(movies);
     })
     .catch(next);
 };
 
 const createMovie = (req, res, next) => {
   const { _id } = req.user;
-  const {
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
-    movieId,
-  } = req.body;
 
-  Movie.create({
-    owner: _id,
-    country,
-    director,
-    duration,
-    year,
-    description,
-    image,
-    trailerLink,
-    nameRU,
-    nameEN,
-    thumbnail,
-    movieId,
-  })
+  Movie.create({ owner: _id, ...req.body })
     .then((movie) => {
       res
         .status(CREATED)
