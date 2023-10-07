@@ -3,7 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 const {
-  ERROR_CODE_UNIQUE, STATUS_OK, CREATED, JWT_SECRET,
+  ERROR_CODE_UNIQUE, CREATED, JWT_SECRET,
 } = require('../utils/constants');
 const BadRequest = require('../utils/errors/BadRequest');
 const NotFound = require('../utils/errors/NotFound');
@@ -28,8 +28,7 @@ const login = (req, res, next) => {
               id: user._id,
               token: newToken,
               name: user.name,
-              about: user.about,
-              avatar: user.avatar,
+              email: user.email,
             });
           } else {
             next(new ErrorAccess('Неверный логин или пароль'));
@@ -39,14 +38,16 @@ const login = (req, res, next) => {
     .catch(next);
 };
 
-const getUserInfo = (req, res, next) => User.findById(req.user._id)
-  .orFail(new NotFound('Пользователь не найден'))
-  .then((user) => {
-    res.status(200).send(user);
-  })
-  .catch((error) => {
-    next(error);
-  });
+const getUserInfo = (req, res, next) => {
+  User.findById(req.user._id)
+    .orFail(new NotFound('Пользователь не найден'))
+    .then((user) => {
+      res.status(200).send(user);
+    })
+    .catch((error) => {
+      next(error);
+    });
+};
 
 const createUser = (req, res, next) => {
   const {
@@ -75,24 +76,36 @@ const createUser = (req, res, next) => {
     });
 };
 
-const updateUserInfo = (req, res, next) => {
+// eslint-disable-next-line consistent-return
+const updateUserInfo = async (req, res, next) => {
   const { name, email } = req.body;
   const { _id } = req.user;
 
-  User.findByIdAndUpdate({ _id }, { name, email }, { new: true, runValidators: true })
-    .then((user) => {
-      if (!user) {
-        next(new NotFound('Пользователь по указанному id не найден'));
-      }
-      res.status(STATUS_OK).send(user);
-    })
-    .catch((err) => {
-      if (err instanceof ValidationError || err instanceof CastError) {
-        next(new BadRequest('Данные введены некоректно'));
-      } else {
-        next(err);
-      }
-    });
+  try {
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser && existingUser._id.toString() !== _id) {
+      return next(new NotUnique('Пользователь с таким email уже зарегистрирован'));
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      { _id },
+      { name, email },
+      { new: true, runValidators: true },
+    );
+
+    if (!updatedUser) {
+      return next(new NotFound('Указанный пользователь не найден.'));
+    }
+
+    res.send(updatedUser);
+  } catch (err) {
+    if (err instanceof ValidationError || err instanceof CastError) {
+      next(new BadRequest('Переданы некорректные данные'));
+    } else {
+      next(err);
+    }
+  }
 };
 
 module.exports = {

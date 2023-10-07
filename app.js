@@ -16,13 +16,13 @@ const app = express();
 
 app.use(cors());
 app.use(helmet());
-app.use(bodyParser.json());
-app.use(cookieParser());
-app.use(requestLogger);
-
 app.use(limiter);
 mongoose.connect(MONGO)
   .then(() => console.log('Connected to data base'));
+
+app.use(bodyParser.json());
+app.use(cookieParser());
+app.use(requestLogger);
 
 app.use(router);
 
